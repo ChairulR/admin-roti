@@ -9,7 +9,7 @@ export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState("dashboard")
 
   return (
-    <div className="flex h-screen bg-gradient-to-b from-green-50 to-green-100">
+    <div className="flex h-screen bg-white">
       <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
       <div className="flex-1 flex flex-col overflow-hidden">
         <Header/>
