@@ -122,3 +122,122 @@ export async function updateOrderStatus(orderId, status) {
         return { success: false, message: 'Kesalahan saat update pesanan' }
     }
 }
+
+export async function updateUserStatus(userId, isAdmin) {
+  try {
+    console.log(userId)
+    const user = await prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      return { success: false, message: "User tidak ditemukan." };
+    }
+
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: { isAdmin },
+    });
+
+    return { success: true, data: updatedUser };
+  } catch (error) {
+    console.error("Error updating user status:", error);
+    return { success: false, message: "Terjadi kesalahan saat memperbarui status." };
+  }
+}
+
+export async function addProduct({ name, price, stock }) {
+  try {
+    if (!name || !price || !stock) {
+      return { success: false, message: "Semua field harus diisi." };
+    }
+    const newProduct = await prisma.product.create({
+      data: { name, price: parseFloat(price), stock: parseInt(stock, 10) },
+    });
+
+    return { success: true, data: newProduct };
+  } catch (error) {
+    console.error("Error adding product:", error);
+    return { success: false, message: "Terjadi kesalahan saat menambahkan produk." };
+  }
+}
+
+export async function updateProduct(productId, { name, price, stock }) {
+  try {
+    if (!productId || !name || !price || !stock) {
+      return { success: false, message: "Semua field harus diisi." };
+    }
+
+    const existingProduct = await prisma.product.findUnique({ where: { id: productId } });
+    if (!existingProduct) {
+      return { success: false, message: "Produk tidak ditemukan." };
+    }
+
+    const updatedProduct = await prisma.product.update({
+      where: { id: productId },
+      data: { name, price: parseFloat(price), stock: parseInt(stock, 10) },
+    });
+
+    return { success: true, data: updatedProduct };
+  } catch (error) {
+    console.error("Error updating product:", error);
+    return { success: false, message: "Terjadi kesalahan saat memperbarui produk." };
+  }
+}
+
+export async function deleteProduct(productId) {
+  try {
+    // Cek apakah produk ada
+    const existingProduct = await prisma.product.findUnique({ where: { id: productId } });
+    if (!existingProduct) {
+      return { success: false, message: "Produk tidak ditemukan." };
+    }
+
+    // Hapus produk dari database
+    await prisma.product.delete({ where: { id: productId } });
+
+    return { success: true, message: "Produk berhasil dihapus." };
+  } catch (error) {
+    console.error("Error deleting product:", error);
+    return { success: false, message: "Terjadi kesalahan saat menghapus produk." };
+  }
+}
+
+export async function getAllProducts() {
+  try {
+    // Mengambil semua produk dari database
+    const products = await prisma.product.findMany({
+      orderBy: { name: "asc" }, // Urutkan produk berdasarkan nama
+    });
+
+    return { success: true, data: products };
+  } catch (error) {
+    console.error("Error fetching products:", error);
+    return { success: false, message: "Terjadi kesalahan saat mengambil produk." };
+  }
+}
+
+export async function getSalesStatistics() {
+  try {
+    const salesData = await prisma.order.groupBy({
+      by: ["month"],
+      _sum: { totalSales: true },
+      orderBy: { month: "asc" },
+    });
+
+    const totalOrders = await prisma.order.count();
+    const totalRevenue = await prisma.order.aggregate({
+      _sum: { totalSales: true },
+    });
+
+    return {
+      success: true,
+      data: salesData.map((data) => ({
+        month: data.month,
+        totalSales: data._sum.totalSales || 0,
+      })),
+      totalOrders,
+      totalRevenue: totalRevenue._sum.totalSales || 0,
+    };
+  } catch (error) {
+    console.error("Error fetching sales statistics:", error);
+    return { success: false, message: "Terjadi kesalahan saat mengambil statistik penjualan." };
+  }
+}
