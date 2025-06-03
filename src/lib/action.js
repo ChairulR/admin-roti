@@ -216,13 +216,18 @@ export async function getAllProducts() {
 
 export async function getSalesStatistics() {
   try {
-    const salesData = await prisma.order.groupBy({
-      by: ["month"],
-      _sum: { totalSales: true },
-      orderBy: { month: "asc" },
-    });
+    // Mengambil data penjualan per bulan menggunakan query raw SQL
+    const salesData = await prisma.$queryRaw`
+      SELECT 
+        EXTRACT(MONTH FROM "createdAt") AS month, 
+        SUM("totalSales") AS totalSales
+      FROM "Order"
+      GROUP BY month
+      ORDER BY month ASC
+    `;
 
     const totalOrders = await prisma.order.count();
+
     const totalRevenue = await prisma.order.aggregate({
       _sum: { totalSales: true },
     });
@@ -231,7 +236,7 @@ export async function getSalesStatistics() {
       success: true,
       data: salesData.map((data) => ({
         month: data.month,
-        totalSales: data._sum.totalSales || 0,
+        totalSales: data.totalSales || 0,
       })),
       totalOrders,
       totalRevenue: totalRevenue._sum.totalSales || 0,

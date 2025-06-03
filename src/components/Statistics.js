@@ -12,24 +12,24 @@ export default function Statistics() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    async function fetchStatistics() {
-      setLoading(true);
-      try {
-        const result = await getSalesStatistics();
-        if (result.success) {
-          setStats(result.data);
-        }
-      } catch (error) {
-        console.error("Error fetching statistics:", error);
-        setError("Gagal mengambil data statistik.");
-      } finally {
-        setLoading(false);
+useEffect(() => {
+  async function fetchStatistics() {
+    setLoading(true);
+    try {
+      const result = await getSalesStatistics();
+      console.log("Data Statistik:", result); // Debugging output API
+      if (result.success) {
+        setStats(result.data);
       }
+    } catch (error) {
+      console.error("Error fetching statistics:", error);
+      setError("Gagal mengambil data statistik.");
+    } finally {
+      setLoading(false);
     }
-
+  }
     fetchStatistics();
-  }, []);
+}, []);
 
   const chartData = {
     labels: stats ? stats.map((data) => data.month) : [],
