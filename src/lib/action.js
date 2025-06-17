@@ -143,44 +143,65 @@ export async function updateUserStatus(userId, isAdmin) {
   }
 }
 
-export async function addProduct({ name, price, stock }) {
+export const addProduct = async (formdata) => {
+  const { name, price, stock, flavor } = formdata;
+
+  if (!name || !price || !stock || !flavor) {
+    return { success: false, message: "Semua field harus diisi." };
+  }
+
+  if (!["sweet", "savory"].includes(flavor.toLowerCase())) {
+    return { success: false, message: "Flavor harus berupa 'sweet' atau 'savory'." };
+  }
+
   try {
-    if (!name || !price || !stock) {
-      return { success: false, message: "Semua field harus diisi." };
-    }
     const newProduct = await prisma.product.create({
-      data: { name, price: parseFloat(price), stock: parseInt(stock, 10) },
+      data: {
+        name,
+        price: parseInt(price),
+        stock: parseInt(stock),
+        flavor: flavor.toLowerCase(),
+        image: "default.jpg" // atau sesuaikan jika kamu punya upload
+      },
     });
 
     return { success: true, data: newProduct };
   } catch (error) {
-    console.error("Error adding product:", error);
-    return { success: false, message: "Terjadi kesalahan saat menambahkan produk." };
+    console.error("Error addProduct:", error);
+    return { success: false, message: "Gagal menambahkan produk." };
   }
-}
+};
 
-export async function updateProduct(productId, { name, price, stock }) {
+
+export const updateProduct = async (id, formdata) => {
+  const { name, price, stock, flavor } = formdata;
+
+  if (!name || !price || !stock || !flavor) {
+    return { success: false, message: "Semua field harus diisi." };
+  }
+
+  if (!["sweet", "savory"].includes(flavor.toLowerCase())) {
+    return { success: false, message: "Flavor harus berupa 'sweet' atau 'savory'." };
+  }
+
   try {
-    if (!productId || !name || !price || !stock) {
-      return { success: false, message: "Semua field harus diisi." };
-    }
-
-    const existingProduct = await prisma.product.findUnique({ where: { id: productId } });
-    if (!existingProduct) {
-      return { success: false, message: "Produk tidak ditemukan." };
-    }
-
     const updatedProduct = await prisma.product.update({
-      where: { id: productId },
-      data: { name, price: parseFloat(price), stock: parseInt(stock, 10) },
+      where: { id: Number(id) },
+      data: {
+        name,
+        price: parseInt(price),
+        stock: parseInt(stock),
+        flavor: flavor.toLowerCase(),
+      },
     });
 
     return { success: true, data: updatedProduct };
   } catch (error) {
-    console.error("Error updating product:", error);
-    return { success: false, message: "Terjadi kesalahan saat memperbarui produk." };
+    console.error("Error updateProduct:", error);
+    return { success: false, message: "Gagal memperbarui produk." };
   }
-}
+};
+
 
 export async function deleteProduct(productId) {
   try {

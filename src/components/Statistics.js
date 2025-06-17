@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { getSalesStatistics } from "@/lib/action"; // Pastikan fungsi API tersedia
+import { getSalesStatistics } from "@/lib/action"; 
 import { Bar } from "react-chartjs-2";
 import { Chart as ChartJS, CategoryScale, LinearScale, BarElement, Title, Tooltip, Legend } from "chart.js";
 
@@ -17,7 +17,7 @@ useEffect(() => {
     setLoading(true);
     try {
       const result = await getSalesStatistics();
-      console.log("Data Statistik:", result); // Debugging output API
+      console.log("Data Statistik:", result);
       if (result.success) {
         setStats(result.data);
       }

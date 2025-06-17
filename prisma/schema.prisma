@@ -26,6 +26,7 @@ model Product {
   price     Int
   image     String
   flavor    String
+  stock     Int       @default(0)
   createdAt DateTime  @default(now())
   updatedAt DateTime  @updatedAt
   comments  Comment[]
@@ -40,10 +41,10 @@ model Comment {
   productId Int
   rate      Int?
   userId    Int
+  orderId   Int
+  order     Order    @relation(fields: [orderId], references: [id])
   product   Product  @relation(fields: [productId], references: [id])
   user      User     @relation(fields: [userId], references: [id])
-  orderId  Int
-  order    Order?   @relation(fields: [orderId], references: [id])
 }
 
 model Banner {
@@ -55,18 +56,18 @@ model Banner {
 }
 
 model Order {
-  id        Int      @id @default(autoincrement())
+  id        Int           @id @default(autoincrement())
   userId    Int
   productId Int
-  user      User     @relation(fields: [userId], references: [id])
-  product   Product  @relation(fields: [productId], references: [id])
-  qty       Int @default(1)
+  qty       Int           @default(1)
+  status    OrderStatus   @default(PURCHASED)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
+  payment   PaymentMethod @default(COD)
+  orderType orderType     @default(PICKUP)
   comments  Comment[]
-  status   OrderStatus @default(PURCHASED)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  payment PaymentMethod @default(COD)
-  orderType orderType @default(PICKUP)
+  product   Product       @relation(fields: [productId], references: [id])
+  user      User          @relation(fields: [userId], references: [id])
 }
 
 enum OrderStatus {

@@ -104,6 +104,16 @@ export default function ProductManager() {
             onChange={handleInputChange}
             className="w-full p-2 rounded bg-gray-700 text-gray-300 border border-gray-600 focus:ring-2 focus:ring-gray-400"
           />
+          <select
+            name="flavor"
+            value={form.flavor || ""}
+            onChange={handleInputChange}
+            className="w-full p-2 rounded bg-gray-700 text-gray-300 border border-gray-600 focus:ring-2 focus:ring-gray-400"
+          >
+            <option value="">-- Sweet/Savory --</option>
+            <option value="sweet">sweet</option>
+            <option value="savory">savory</option>
+          </select>
           <input
             type="number"
             name="stock"
@@ -143,44 +153,58 @@ export default function ProductManager() {
       ) : products.length === 0 ? (
         <p className="text-center text-gray-400 italic">Tidak ada produk tersedia.</p>
       ) : (
-        <div className="overflow-x-auto">
-          <table className="min-w-full table-auto border-collapse rounded-lg overflow-hidden">
-            <thead className="bg-gray-800 text-gray-300 text-sm">
-              <tr>
-                <th className="border border-gray-600 px-4 py-3 text-left">Nama</th>
-                <th className="border border-gray-600 px-4 py-3 text-left">Harga</th>
-                <th className="border border-gray-600 px-4 py-3 text-left">Stok</th>
-                <th className="border border-gray-600 px-4 py-3 text-center">Aksi</th>
-              </tr>
-            </thead>
-            <tbody className="bg-gray-700 divide-y divide-gray-600">
-              {products.map((prod) => (
-                <tr key={prod.id} className="hover:bg-gray-800 transition duration-150">
-                  <td className="px-4 py-3 text-sm font-medium text-white">{prod.name}</td>
-                  <td className="px-4 py-3 text-sm text-gray-400">Rp{prod.price}</td>
-                  <td className="px-4 py-3 text-sm text-gray-400">{prod.stock}</td>
-                  <td className="px-4 py-3 text-center flex justify-center gap-2">
+      <div className="overflow-x-auto">
+        <table className="min-w-full table-auto border-collapse rounded-lg overflow-hidden">
+          <thead className="bg-gray-800 text-gray-300 text-sm">
+            <tr>
+              <th className="border border-gray-600 px-4 py-3 text-left">Nama</th>
+              <th className="border border-gray-600 px-4 py-3 text-left">Kategori</th>
+              <th className="border border-gray-600 px-4 py-3 text-left">Harga</th>
+              <th className="border border-gray-600 px-4 py-3 text-left">Stok</th>
+              <th className="border border-gray-600 px-4 py-3 text-center">Aksi</th>
+            </tr>
+          </thead>
+          <tbody className="bg-gray-700 divide-y divide-gray-600">
+            {products.map((prod) => (
+              <tr key={prod.id} className="hover:bg-gray-800 transition duration-150">
+                <td className="px-4 py-3 text-sm font-medium text-white">{prod.name}</td>
+                <td className="px-4 py-3 text-sm text-gray-300 capitalize">
+                  {prod.flavor === "sweet" ? "Manis" : "Gurih"}
+                </td>
+                <td className="px-4 py-3 text-sm text-gray-400">Rp{prod.price}</td>
+                <td className="px-4 py-3 text-sm text-gray-400">{prod.stock}</td>
+                <td className="px-4 py-3 text-center">
+                  <div className="flex justify-center gap-2">
                     <button
                       onClick={() => {
                         setSelectedProduct(prod);
-                        setForm({ name: prod.name, price: prod.price, stock: prod.stock });
+                        setForm({
+                          name: prod.name || "",
+                          price: prod.price || 0,
+                          stock: prod.stock || 0,
+                          flavor: prod.flavor || "sweet", 
+
+                        })
                       }}
-                      className="p-2 rounded bg-gray-600 hover:bg-gray-500 text-white flex items-center gap-1"
+                      className="p-2 rounded bg-yellow-500 hover:bg-yellow-600 text-white transition"
+                      title="Edit Produk"
                     >
-                      <Edit className="w-4 h-4" />
+                      ✏️
                     </button>
                     <button
                       onClick={() => handleDeleteProduct(prod.id)}
-                      className="p-2 rounded bg-red-600 hover:bg-red-500 text-white flex items-center gap-1"
+                      className="p-2 rounded bg-red-600 hover:bg-red-500 text-white transition"
+                      title="Hapus Produk"
                     >
-                      <Trash className="w-4 h-4" />
+                      🗑️
                     </button>
-                  </td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
+                  </div>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
       )}
     </div>
   );
