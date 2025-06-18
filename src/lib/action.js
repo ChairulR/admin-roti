@@ -1,6 +1,8 @@
 "use server";
 
 import { prisma } from "@/lib/prisma"; // pastikan prisma.js di-setup
+import { format, subDays, eachDayOfInterval } from "date-fns";
+import id from "date-fns/locale/id";
 
 // Mendapatkan semua user
 export const getAllUsers = async () => {
@@ -81,8 +83,19 @@ export const getAllOrders = async () => {
   try {
     const orders = await prisma.order.findMany({
       include: {
-        product: { select: { name: true, price: true } },
-        user: { select: { name: true } },
+        product: {
+          select: {
+            name: true,
+            price: true,
+          },
+        },
+        user: {
+          select: {
+            name: true,
+            email: true,
+            address: true, // ✅ tambahkan ini
+          },
+        },
       },
       orderBy: {
         createdAt: "desc",
@@ -235,35 +248,67 @@ export async function getAllProducts() {
   }
 }
 
-export async function getSalesStatistics() {
+export async function getSalesStatistics(range = "monthly") {
   try {
-    // Mengambil data penjualan per bulan menggunakan query raw SQL
-    const salesData = await prisma.$queryRaw`
-      SELECT 
-        EXTRACT(MONTH FROM "createdAt") AS month, 
-        SUM("totalSales") AS totalSales
-      FROM "Order"
-      GROUP BY month
-      ORDER BY month ASC
-    `;
-
-    const totalOrders = await prisma.order.count();
-
-    const totalRevenue = await prisma.order.aggregate({
-      _sum: { totalSales: true },
+    const orders = await prisma.order.findMany({
+      where: { status: "COMPLETED" },
+      include: { product: true },
     });
+
+    let chartMap = new Map();
+
+    if (range === "daily") {
+      const today = new Date();
+      const daysBack = 7; // Ubah ke 30 jika mau 30 hari terakhir
+      const startDate = subDays(today, daysBack - 1);
+
+      // Inisialisasi semua hari dengan 0
+      const days = eachDayOfInterval({ start: startDate, end: today });
+      for (let day of days) {
+        const label = format(day, "dd MMM", { locale: id });
+        chartMap.set(label, 0);
+      }
+
+      for (let order of orders) {
+        const label = format(new Date(order.createdAt), "dd MMM", { locale: id });
+        if (chartMap.has(label)) {
+          chartMap.set(label, chartMap.get(label) + order.product.price * order.qty);
+        }
+      }
+
+    } else if (range === "monthly") {
+      for (let order of orders) {
+        const label = format(new Date(order.createdAt), "MMM yyyy", { locale: id });
+        chartMap.set(label, (chartMap.get(label) || 0) + order.product.price * order.qty);
+      }
+
+    } else if (range === "yearly") {
+      for (let order of orders) {
+        const label = format(new Date(order.createdAt), "yyyy", { locale: id });
+        chartMap.set(label, (chartMap.get(label) || 0) + order.product.price * order.qty);
+      }
+    }
+
+    const chart = Array.from(chartMap.entries()).map(([label, totalSales]) => ({
+      label,
+      totalSales,
+    }));
+
+    const totalRevenue = orders.reduce(
+      (sum, order) => sum + order.product.price * order.qty,
+      0
+    );
 
     return {
       success: true,
-      data: salesData.map((data) => ({
-        month: data.month,
-        totalSales: data.totalSales || 0,
-      })),
-      totalOrders,
-      totalRevenue: totalRevenue._sum.totalSales || 0,
+      data: {
+        totalOrders: orders.length,
+        totalRevenue,
+        chart,
+      },
     };
   } catch (error) {
-    console.error("Error fetching sales statistics:", error);
-    return { success: false, message: "Terjadi kesalahan saat mengambil statistik penjualan." };
+    console.error("Error in getSalesStatistics:", error);
+    return { success: false, message: "Gagal mengambil data statistik." };
   }
 }
